@@ -7,6 +7,7 @@ const Student = mongoose.model(
     name: { type: String, required: true },
     phone: { type: String, required: true },
     cpf: { type: String, required: true },
+    company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
     address: {
       street: { type: String },
       city: { type: String },

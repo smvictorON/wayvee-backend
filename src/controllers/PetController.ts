@@ -4,7 +4,7 @@ import Pet from '../models/Pet'
 import { isValidObjectId } from 'mongoose';
 import { Request, Response } from 'express';
 
-export default class UserController {
+export default class PetController {
   static async create(req: Request, res: Response) {
     const { name, age, weight, color } = req.body
     const images: any = req.files
