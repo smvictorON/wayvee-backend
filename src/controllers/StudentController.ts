@@ -27,11 +27,19 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
+    let parsedAddress
+    try {
+      parsedAddress = JSON.parse(address);
+    } catch (error) {
+      res.status(422).json({ message: "Endereço inválido!" });
+      return;
+    }
+
     const student = new Student({
       name,
       phone,
       cpf,
-      address,
+      address: parsedAddress,
       email,
       rg,
       birthdate,
@@ -123,10 +131,10 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    // if (user._id.toString() !== student.user._id.toString()) {
-    //   res.status(422).json({ message: "Houve um problema no processamento da edição!" })
-    //   return
-    // }
+    if (user.company.toString() !== student.company.toString()) {
+      res.status(422).json({ message: "Houve um problema no processamento da edição!" })
+      return
+    }
 
     if (!name) {
       res.status(422).json({ message: "O nome é obrigatório!" })
@@ -143,11 +151,19 @@ export default class StudentController {
       return
     }
 
+    let parsedAddress
+    try {
+      parsedAddress = JSON.parse(address);
+    } catch (error) {
+      res.status(422).json({ message: "Endereço inválido!" });
+      return;
+    }
+
     const updatedData:any = {
       name: name,
       phone: phone,
       cpf: cpf,
-      address: address,
+      address: parsedAddress,
       email: email,
       rg: rg,
       birthdate: birthdate,
