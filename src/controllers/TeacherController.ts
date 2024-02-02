@@ -1,10 +1,10 @@
 import getToken from '../helpers/get-token'
 import getUserByToken from '../helpers/get-user-by-token'
-import Student from '../models/Student'
+import Teacher from '../models/Teacher'
 import { isValidObjectId } from 'mongoose';
 import { Request, Response } from 'express';
 
-export default class StudentController {
+export default class TeacherController {
   static async create(req: Request, res: Response) {
     const { name, phone, cpf, address, email, rg, birthdate } = req.body
     const images: any = req.files
@@ -35,7 +35,7 @@ export default class StudentController {
       return;
     }
 
-    const student = new Student({
+    const teacher = new Teacher({
       name,
       phone,
       cpf,
@@ -46,11 +46,11 @@ export default class StudentController {
       company: user.company
     })
 
-    images.map((image: any) => student.images.push(image.filename))
+    images.map((image: any) => teacher.images.push(image.filename))
 
     try {
-      const newStudent = await student.save()
-      res.status(201).json({ message: "Aluno cadastrado com sucesso!", newStudent })
+      const newTeacher = await teacher.save()
+      res.status(201).json({ message: "Professor cadastrado com sucesso!", newTeacher })
     } catch (err) {
       res.status(500).json({ message: err })
     }
@@ -60,9 +60,9 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const students = await Student.find({ 'company': user.company }).sort('-createAt')
+    const teachers = await Teacher.find({ 'company': user.company }).sort('-createAt')
 
-    res.status(200).json({ students: students })
+    res.status(200).json({ teachers: teachers })
   }
 
   static async getOne(req: Request, res: Response) {
@@ -73,14 +73,14 @@ export default class StudentController {
       return
     }
 
-    const student = await Student.findOne({ _id: id })
+    const teacher = await Teacher.findOne({ _id: id })
 
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+    if (!teacher) {
+      res.status(404).json({ message: "Professor não encontrado!" })
       return
     }
 
-    res.status(200).json({ student: student })
+    res.status(200).json({ teacher: teacher })
   }
 
   static async deleteOne(req: Request, res: Response) {
@@ -91,24 +91,24 @@ export default class StudentController {
       return
     }
 
-    const student = await Student.findOne({ _id: id })
+    const teacher = await Teacher.findOne({ _id: id })
 
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+    if (!teacher) {
+      res.status(404).json({ message: "Professor não encontrado!" })
       return
     }
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    // if (user._id.toString() !== student.user._id.toString()) {
+    // if (user._id.toString() !== teacher.user._id.toString()) {
     //   res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
     //   return
     // }
 
-    await Student.findByIdAndRemove(id)
+    await Teacher.findByIdAndRemove(id)
 
-    res.status(200).json({ message: "Aluno removido com sucesso!" })
+    res.status(200).json({ message: "Professor removido com sucesso!" })
   }
 
   static async updateOne(req: Request, res: Response) {
@@ -121,17 +121,17 @@ export default class StudentController {
       return
     }
 
-    const student = await Student.findOne({ _id: id })
+    const teacher = await Teacher.findOne({ _id: id })
 
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+    if (!teacher) {
+      res.status(404).json({ message: "Professor não encontrado!" })
       return
     }
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    if (user.company.toString() !== student.company.toString()) {
+    if (user.company.toString() !== teacher.company.toString()) {
       res.status(422).json({ message: "Houve um problema no processamento da edição!" })
       return
     }
@@ -174,8 +174,8 @@ export default class StudentController {
       images.map((image: any) => updatedData.images.push(image.filename))
     }
 
-    await Student.findByIdAndUpdate(id, updatedData)
+    await Teacher.findByIdAndUpdate(id, updatedData)
 
-    res.status(200).json({ message: "Aluno atualizado com sucesso!" })
+    res.status(200).json({ message: "Professor atualizado com sucesso!" })
   }
 }
