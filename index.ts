@@ -17,10 +17,12 @@ app.use(express.static('public'));
 import UserRoutes from './src/routes/UserRoutes';
 import StudentRoutes from './src/routes/StudentRoutes';
 import TeacherRoutes from './src/routes/TeacherRoutes';
+import LessonRoutes from './src/routes/LessonRoutes';
 
 app.use('/users', UserRoutes);
 app.use('/students', StudentRoutes);
 app.use('/teachers', TeacherRoutes);
+app.use('/lessons', LessonRoutes);
 
 app.listen(5001, () => {
   console.log('Server listening on port 5001');
