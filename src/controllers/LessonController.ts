@@ -6,21 +6,35 @@ import { Request, Response } from 'express';
 
 export default class LessonController {
   static async create(req: Request, res: Response) {
-    const { name, phone, cpf, address, email, rg, birthdate } = req.body
-    const images: any = req.files
+    const {
+      date,
+      hour_start,
+      hour_end,
+      teacher,
+      students,
+      classroom,
+      subject,
+      observation,
+    } = req.body
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
+    if (!date) {
+      res.status(422).json({ message: "A data é obrigatória!" })
       return
     }
 
-    if (!phone) {
-      res.status(422).json({ message: "A telefone é obrigatório!" })
+    if (!hour_start || !hour_end) {
+      res.status(422).json({ message: "A horário é obrigatório!" })
       return
     }
 
-    if (!cpf) {
-      res.status(422).json({ message: "O CPF é obrigatório!" })
+    if (!teacher) {
+      res.status(422).json({ message: "Selecione um professor!" })
+      return
+    }
+
+    const studentsArr = students.split(',')
+    if (!studentsArr || studentsArr.length === 0) {
+      res.status(422).json({ message: "Selecione ao menos um aluno!" })
       return
     }
 
@@ -28,18 +42,20 @@ export default class LessonController {
     const user = await getUserByToken(token, res)
 
     const lesson = new Lesson({
-      name,
-      phone,
-      cpf,
-      email,
-      rg,
-      birthdate,
+      date,
+      hour_start,
+      hour_end,
+      teacher,
+      students: studentsArr,
+      classroom,
+      subject,
+      observation,
       company: user.company
     })
 
     try {
       const newLesson = await lesson.save()
-      res.status(201).json({ message: "Aluno cadastrado com sucesso!", newLesson })
+      res.status(201).json({ message: "Aula cadastrada com sucesso!", newLesson })
     } catch (err) {
       res.status(500).json({ message: err })
     }
@@ -65,7 +81,7 @@ export default class LessonController {
     const lesson = await Lesson.findOne({ _id: id })
 
     if (!lesson) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+      res.status(404).json({ message: "Aula não encontrada!" })
       return
     }
 
@@ -83,7 +99,7 @@ export default class LessonController {
     const lesson = await Lesson.findOne({ _id: id })
 
     if (!lesson) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+      res.status(404).json({ message: "Aula não encontrada!" })
       return
     }
 
@@ -97,13 +113,21 @@ export default class LessonController {
 
     await Lesson.findByIdAndRemove(id)
 
-    res.status(200).json({ message: "Aluno removido com sucesso!" })
+    res.status(200).json({ message: "Aula removida com sucesso!" })
   }
 
   static async updateOne(req: Request, res: Response) {
     const id = req.params.id
-    const { name, phone, cpf, address, email, rg, birthdate } = req.body
-    const images: any = req.files
+    const {
+      date,
+      hour_start,
+      hour_end,
+      teacher,
+      students,
+      classroom,
+      subject,
+      observation,
+    } = req.body
 
     if (!isValidObjectId(id)) {
       res.status(422).json({ message: "Id inválido!" })
@@ -113,7 +137,7 @@ export default class LessonController {
     const lesson = await Lesson.findOne({ _id: id })
 
     if (!lesson) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
+      res.status(404).json({ message: "Aula não encontrada!" })
       return
     }
 
@@ -125,32 +149,39 @@ export default class LessonController {
       return
     }
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
+    if (!date) {
+      res.status(422).json({ message: "A data é obrigatória!" })
       return
     }
 
-    if (!phone) {
-      res.status(422).json({ message: "A telefone é obrigatório!" })
+    if (!hour_start || !hour_end) {
+      res.status(422).json({ message: "A horário é obrigatório!" })
       return
     }
 
-    if (!cpf) {
-      res.status(422).json({ message: "O CPF é obrigatório!" })
+    if (!teacher) {
+      res.status(422).json({ message: "Selecione um professor!" })
+      return
+    }
+
+    if (!students || students.length === 0) {
+      res.status(422).json({ message: "Selecione ao menos um aluno!" })
       return
     }
 
     const updatedData:any = {
-      name: name,
-      phone: phone,
-      cpf: cpf,
-      email: email,
-      rg: rg,
-      birthdate: birthdate,
+      date,
+      hour_start,
+      hour_end,
+      teacher,
+      students,
+      classroom,
+      subject,
+      observation,
     }
 
     await Lesson.findByIdAndUpdate(id, updatedData)
 
-    res.status(200).json({ message: "Aluno atualizado com sucesso!" })
+    res.status(200).json({ message: "Aula atualizada com sucesso!" })
   }
 }

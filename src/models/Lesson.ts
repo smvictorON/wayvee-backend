@@ -10,7 +10,7 @@ const Lesson = mongoose.model(
     teacher: { type: Schema.Types.ObjectId, ref: 'Teacher', required: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
     students: [{ type: Schema.Types.ObjectId, ref: 'Student', required: true  }],
-    class: { type: String },
+    classroom: { type: String },
     subject: { type: String },
     observation: { type: String },
     status: { type: String, enum: ['Active', 'Cancelled', 'Done'] },
