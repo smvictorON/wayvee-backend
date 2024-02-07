@@ -17,26 +17,9 @@ export default class LessonController {
       observation,
     } = req.body
 
-    if (!date) {
-      res.status(422).json({ message: "A data é obrigatória!" })
-      return
-    }
-
-    if (!hour_start || !hour_end) {
-      res.status(422).json({ message: "A horário é obrigatório!" })
-      return
-    }
-
-    if (!teacher) {
-      res.status(422).json({ message: "Selecione um professor!" })
-      return
-    }
-
-    const studentsArr = students.split(',')
-    if (!studentsArr || studentsArr.length === 0) {
-      res.status(422).json({ message: "Selecione ao menos um aluno!" })
-      return
-    }
+    const err = validateInputData(date, hour_start, hour_end, teacher, students)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
@@ -46,7 +29,7 @@ export default class LessonController {
       hour_start,
       hour_end,
       teacher,
-      students: studentsArr,
+      students: students.split(','),
       classroom,
       subject,
       observation,
@@ -65,7 +48,8 @@ export default class LessonController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const lessons = await Lesson.find({ 'company': user.company }).sort('-createAt')
+    const lessons = await Lesson.find({ 'company': user.company }).populate('teacher').sort('-createdAt')
+    console.log("🚀 ~ LessonController ~ getAll ~ lessons:", lessons)
 
     res.status(200).json({ lessons: lessons })
   }
@@ -73,17 +57,13 @@ export default class LessonController {
   static async getOne(req: Request, res: Response) {
     const id = req.params.id
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const lesson = await Lesson.findOne({ _id: id })
 
-    if (!lesson) {
-      res.status(404).json({ message: "Aula não encontrada!" })
-      return
-    }
+    if (!lesson)
+      return res.status(404).json({ message: "Aula não encontrada!" })
 
     res.status(200).json({ lesson: lesson })
   }
@@ -91,23 +71,19 @@ export default class LessonController {
   static async deleteOne(req: Request, res: Response) {
     const id = req.params.id
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const lesson = await Lesson.findOne({ _id: id })
 
-    if (!lesson) {
-      res.status(404).json({ message: "Aula não encontrada!" })
-      return
-    }
+    if (!lesson)
+      return res.status(404).json({ message: "Aula não encontrada!" })
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
     // if (user._id.toString() !== lesson.user._id.toString()) {
-    //   res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
+    //   return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
     //   return
     // }
 
@@ -129,45 +105,23 @@ export default class LessonController {
       observation,
     } = req.body
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const lesson = await Lesson.findOne({ _id: id })
 
-    if (!lesson) {
-      res.status(404).json({ message: "Aula não encontrada!" })
-      return
-    }
+    if (!lesson)
+      return res.status(404).json({ message: "Aula não encontrada!" })
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    if (user.company.toString() !== lesson.company.toString()) {
-      res.status(422).json({ message: "Houve um problema no processamento da edição!" })
-      return
-    }
+    if (user.company.toString() !== lesson.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da edição!" })
 
-    if (!date) {
-      res.status(422).json({ message: "A data é obrigatória!" })
-      return
-    }
-
-    if (!hour_start || !hour_end) {
-      res.status(422).json({ message: "A horário é obrigatório!" })
-      return
-    }
-
-    if (!teacher) {
-      res.status(422).json({ message: "Selecione um professor!" })
-      return
-    }
-
-    if (!students || students.length === 0) {
-      res.status(422).json({ message: "Selecione ao menos um aluno!" })
-      return
-    }
+    const err = validateInputData(date, hour_start, hour_end, teacher, students)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     const updatedData:any = {
       date,
@@ -184,4 +138,48 @@ export default class LessonController {
 
     res.status(200).json({ message: "Aula atualizada com sucesso!" })
   }
+}
+
+const compareDatesWithoutTime = (dateA: Date, dateB: Date) => {
+  const yearA = dateA.getFullYear();
+  const monthA = dateA.getMonth();
+  const dayA = dateA.getDate();
+
+  const yearB = dateB.getFullYear();
+  const monthB = dateB.getMonth();
+  const dayB = dateB.getDate();
+
+  if (yearA !== yearB) return yearA - yearB;
+  if (monthA !== monthB) return monthA - monthB;
+  return dayA - dayB;
+}
+
+const validateInputData = (date: any, hour_start: any, hour_end: any, teacher: any, students: any):string => {
+  if (!date)
+    return "A data é obrigatória!"
+
+  const currentDate = new Date();
+  const receivedDate = new Date(`${date}T03:00:00`);
+
+  if (compareDatesWithoutTime(receivedDate, currentDate) < 0)
+    return "A data não pode ser menor que o dia atual!"
+
+  if (!hour_start || !hour_end)
+    return "O horário é obrigatório!"
+
+  const startHour = new Date(`1970-01-01T${hour_start}`);
+  const endHour = new Date(`1970-01-01T${hour_end}`);
+
+  if (startHour >= endHour)
+    return "O horário de término deve ser maior que o horário de início!"
+
+  if (!teacher)
+    return "Selecione um professor!"
+
+  const studentsArr = students.split(',')
+
+  if (!studentsArr || studentsArr.length === 0 || students === '')
+    return "Selecione ao menos um aluno!"
+
+  return ""
 }

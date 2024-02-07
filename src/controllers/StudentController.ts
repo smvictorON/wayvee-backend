@@ -60,7 +60,7 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const students = await Student.find({ 'company': user.company }).sort('-createAt')
+    const students = await Student.find({ 'company': user.company }).sort('-createdAt')
 
     res.status(200).json({ students: students })
   }

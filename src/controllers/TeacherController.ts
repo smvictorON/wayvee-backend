@@ -60,7 +60,7 @@ export default class TeacherController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const teachers = await Teacher.find({ 'company': user.company }).sort('-createAt')
+    const teachers = await Teacher.find({ 'company': user.company }).sort('-createdAt')
 
     res.status(200).json({ teachers: teachers })
   }
