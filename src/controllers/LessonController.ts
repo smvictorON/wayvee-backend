@@ -25,7 +25,7 @@ export default class LessonController {
     const user = await getUserByToken(token, res)
 
     const lesson = new Lesson({
-      date,
+      date: new Date(date),
       hour_start,
       hour_end,
       teacher,
@@ -38,9 +38,10 @@ export default class LessonController {
 
     try {
       const newLesson = await lesson.save()
-      res.status(201).json({ message: "Aula cadastrada com sucesso!", newLesson })
+      return res.status(201).json({ message: "Aula cadastrada com sucesso!", newLesson })
     } catch (err) {
-      res.status(500).json({ message: err })
+      console.log(err)
+      return res.status(500).json({ message: err })
     }
   }
 
@@ -48,10 +49,12 @@ export default class LessonController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const lessons = await Lesson.find({ 'company': user.company }).populate('teacher').sort('-createdAt')
-    console.log("🚀 ~ LessonController ~ getAll ~ lessons:", lessons)
+    const lessons = await Lesson.find({ 'company': user.company })
+      .populate('teacher')
+      .populate('students')
+      .sort('date')
 
-    res.status(200).json({ lessons: lessons })
+    return res.status(200).json({ lessons: lessons })
   }
 
   static async getOne(req: Request, res: Response) {
@@ -65,7 +68,7 @@ export default class LessonController {
     if (!lesson)
       return res.status(404).json({ message: "Aula não encontrada!" })
 
-    res.status(200).json({ lesson: lesson })
+    return res.status(200).json({ lesson: lesson })
   }
 
   static async deleteOne(req: Request, res: Response) {
@@ -75,21 +78,22 @@ export default class LessonController {
       return res.status(422).json({ message: "Id inválido!" })
 
     const lesson = await Lesson.findOne({ _id: id })
-
     if (!lesson)
       return res.status(404).json({ message: "Aula não encontrada!" })
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    // if (user._id.toString() !== lesson.user._id.toString()) {
-    //   return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
-    //   return
-    // }
+    if (user.company.toString() !== lesson.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
 
-    await Lesson.findByIdAndRemove(id)
-
-    res.status(200).json({ message: "Aula removida com sucesso!" })
+    try {
+      await Lesson.findByIdAndRemove(id)
+      return res.status(200).json({ message: "Aula removida com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao remover a aula!" })
+    }
   }
 
   static async updateOne(req: Request, res: Response) {
@@ -109,7 +113,6 @@ export default class LessonController {
       return res.status(422).json({ message: "Id inválido!" })
 
     const lesson = await Lesson.findOne({ _id: id })
-
     if (!lesson)
       return res.status(404).json({ message: "Aula não encontrada!" })
 
@@ -123,20 +126,24 @@ export default class LessonController {
     if (err != "")
       return res.status(422).json({ message: err });
 
-    const updatedData:any = {
-      date,
+    const updatedData: any = {
+      date: new Date(date),
       hour_start,
       hour_end,
       teacher,
-      students,
+      students: students.split(','),
       classroom,
       subject,
       observation,
     }
 
-    await Lesson.findByIdAndUpdate(id, updatedData)
-
-    res.status(200).json({ message: "Aula atualizada com sucesso!" })
+    try {
+      await Lesson.findByIdAndUpdate(id, updatedData)
+      return res.status(200).json({ message: "Aula atualizada com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao atualizar aula!" })
+    }
   }
 }
 
@@ -154,7 +161,7 @@ const compareDatesWithoutTime = (dateA: Date, dateB: Date) => {
   return dayA - dayB;
 }
 
-const validateInputData = (date: any, hour_start: any, hour_end: any, teacher: any, students: any):string => {
+const validateInputData = (date: any, hour_start: any, hour_end: any, teacher: any, students: any): string => {
   if (!date)
     return "A data é obrigatória!"
 

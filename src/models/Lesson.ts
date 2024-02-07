@@ -4,7 +4,7 @@ const { Schema } = mongoose
 const Lesson = mongoose.model(
   'Lesson',
   new Schema({
-    date: { type: String, required: true },
+    date: { type: Date, required: true },
     hour_start: { type: String, required: true },
     hour_end: { type: String, required: true },
     teacher: { type: Schema.Types.ObjectId, ref: 'Teacher', required: true },

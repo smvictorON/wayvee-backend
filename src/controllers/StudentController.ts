@@ -9,20 +9,9 @@ export default class StudentController {
     const { name, phone, cpf, address, email, rg, birthdate } = req.body
     const images: any = req.files
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
-      return
-    }
-
-    if (!phone) {
-      res.status(422).json({ message: "A telefone é obrigatório!" })
-      return
-    }
-
-    if (!cpf) {
-      res.status(422).json({ message: "O CPF é obrigatório!" })
-      return
-    }
+    const err = validateInputData(name, phone, cpf, email, rg)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
@@ -30,9 +19,9 @@ export default class StudentController {
     let parsedAddress
     try {
       parsedAddress = JSON.parse(address);
-    } catch (error) {
-      res.status(422).json({ message: "Endereço inválido!" });
-      return;
+    } catch (err) {
+      console.log(err)
+      return res.status(422).json({ message: "Endereço inválido!" });
     }
 
     const student = new Student({
@@ -50,9 +39,10 @@ export default class StudentController {
 
     try {
       const newStudent = await student.save()
-      res.status(201).json({ message: "Aluno cadastrado com sucesso!", newStudent })
+      return res.status(201).json({ message: "Aluno cadastrado com sucesso!", newStudent })
     } catch (err) {
-      res.status(500).json({ message: err })
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao cadastrar aluno!" })
     }
   }
 
@@ -62,53 +52,45 @@ export default class StudentController {
 
     const students = await Student.find({ 'company': user.company }).sort('-createdAt')
 
-    res.status(200).json({ students: students })
+    return res.status(200).json({ students: students })
   }
 
   static async getOne(req: Request, res: Response) {
     const id = req.params.id
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const student = await Student.findOne({ _id: id })
+    if (!student)
+      return res.status(404).json({ message: "Aluno não encontrado!" })
 
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
-      return
-    }
-
-    res.status(200).json({ student: student })
+    return res.status(200).json({ student: student })
   }
 
   static async deleteOne(req: Request, res: Response) {
     const id = req.params.id
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const student = await Student.findOne({ _id: id })
-
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
-      return
-    }
+    if (!student)
+      return res.status(404).json({ message: "Aluno não encontrado!" })
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    // if (user._id.toString() !== student.user._id.toString()) {
-    //   res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
-    //   return
-    // }
+    if (user.company.toString() !== student.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
 
-    await Student.findByIdAndRemove(id)
-
-    res.status(200).json({ message: "Aluno removido com sucesso!" })
+    try {
+      await Student.findByIdAndRemove(id)
+      return res.status(200).json({ message: "Aluno removido com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao remover aluno!" })
+    }
   }
 
   static async updateOne(req: Request, res: Response) {
@@ -116,50 +98,32 @@ export default class StudentController {
     const { name, phone, cpf, address, email, rg, birthdate } = req.body
     const images: any = req.files
 
-    if (!isValidObjectId(id)) {
-      res.status(422).json({ message: "Id inválido!" })
-      return
-    }
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
 
     const student = await Student.findOne({ _id: id })
-
-    if (!student) {
-      res.status(404).json({ message: "Aluno não encontrado!" })
-      return
-    }
+    if (!student)
+      return res.status(404).json({ message: "Aluno não encontrado!" })
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    if (user.company.toString() !== student.company.toString()) {
-      res.status(422).json({ message: "Houve um problema no processamento da edição!" })
-      return
-    }
+    if (user.company.toString() !== student.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da edição!" })
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
-      return
-    }
-
-    if (!phone) {
-      res.status(422).json({ message: "A telefone é obrigatório!" })
-      return
-    }
-
-    if (!cpf) {
-      res.status(422).json({ message: "O CPF é obrigatório!" })
-      return
-    }
+    const err = validateInputData(name, phone, cpf, email, rg)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     let parsedAddress
     try {
       parsedAddress = JSON.parse(address);
-    } catch (error) {
-      res.status(422).json({ message: "Endereço inválido!" });
-      return;
+    } catch (err) {
+      console.log(err)
+      return res.status(422).json({ message: "Endereço inválido!" });
     }
 
-    const updatedData:any = {
+    const updatedData: any = {
       name: name,
       phone: phone,
       cpf: cpf,
@@ -174,8 +138,47 @@ export default class StudentController {
       images.map((image: any) => updatedData.images.push(image.filename))
     }
 
-    await Student.findByIdAndUpdate(id, updatedData)
-
-    res.status(200).json({ message: "Aluno atualizado com sucesso!" })
+    try {
+      await Student.findByIdAndUpdate(id, updatedData)
+      return res.status(200).json({ message: "Aluno atualizado com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao atualizar aluno!" })
+    }
   }
+}
+
+const validateInputData = (name: any, phone: any, cpf: any, email: any, rg: any): string => {
+  if (!name)
+    return "O nome é obrigatório!"
+
+  if (!phone)
+    return "A telefone é obrigatório!"
+
+  if (!cpf)
+    return "O CPF é obrigatório!"
+
+  const cpfRegex = /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/;
+  const isValidCpf = cpfRegex.test(cpf);
+
+  if (!isValidCpf)
+    return "O CPF está fora do padrão!"
+
+  if (email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidEmail = emailRegex.test(email);
+
+    if (!isValidEmail)
+      return "O email está fora do padrão!"
+  }
+
+  if (rg) {
+    const rgRegex = /^\d{1,2}\.\d{3}\.\d{3}\-[\d|X]$/;
+    const isValidRg = rgRegex.test(rg.toUpperCase());
+
+    if (!isValidRg)
+      return "O rg está fora do padrão!"
+  }
+
+  return ""
 }
