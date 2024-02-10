@@ -19,6 +19,7 @@ const Teacher = mongoose.model(
     birthdate: { type: Date },
     images: { type: Array },
     certificates: { type: Array },
+    deletedAt: { type: Date },
   }, { timestamps: true })
 )
 

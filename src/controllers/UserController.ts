@@ -10,41 +10,27 @@ export default class UserController {
   static async register(req: Request, res: Response) {
     const { name, email, phone, password, confirmpassword } = req.body
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
-      return
-    }
+    if (!name)
+      return res.status(422).json({ message: "O nome é obrigatório!" })
 
-    if (!email) {
-      res.status(422).json({ message: "O email é obrigatório!" })
-      return
-    }
+    if (!email)
+      return res.status(422).json({ message: "O email é obrigatório!" })
 
-    if (!phone) {
-      res.status(422).json({ message: "O telefone é obrigatório!" })
-      return
-    }
+    if (!phone)
+      return res.status(422).json({ message: "O telefone é obrigatório!" })
 
-    if (!password) {
-      res.status(422).json({ message: "A senha é obrigatória!" })
-      return
-    }
+    if (!password)
+      return res.status(422).json({ message: "A senha é obrigatória!" })
 
-    if (!confirmpassword) {
-      res.status(422).json({ message: "A confirmação de senha é obrigatória!" })
-      return
-    }
+    if (!confirmpassword)
+      return res.status(422).json({ message: "A confirmação de senha é obrigatória!" })
 
-    if (password !== confirmpassword) {
-      res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
-      return
-    }
+    if (password !== confirmpassword)
+      return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
 
     const userExists = await User.findOne({ email: email })
-    if (userExists) {
-      res.status(422).json({ message: "Este email já está sendo utilizado!" })
-      return
-    }
+    if (userExists)
+      return res.status(422).json({ message: "Este email já está sendo utilizado!" })
 
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
@@ -55,36 +41,28 @@ export default class UserController {
       const newUser = await user.save()
       await createUserToken(newUser, req, res)
     } catch (err) {
-      res.status(500).json({ message: err })
+      return res.status(500).json({ message: err })
     }
   }
 
   static async login(req: Request, res: Response) {
     const { email, password } = req.body
 
-    if (!email) {
-      res.status(422).json({ message: "O email é obrigatório!" })
-      return
-    }
+    if (!email)
+      return res.status(422).json({ message: "O email é obrigatório!" })
 
-    if (!password) {
-      res.status(422).json({ message: "A senha é obrigatória!" })
-      return
-    }
+    if (!password)
+      return res.status(422).json({ message: "A senha é obrigatória!" })
 
     const user = await User.findOne({ email: email })
-    if (!user) {
-      res.status(422).json({ message: "Usuário não cadastrado!" })
-      return
-    }
+    if (!user)
+      return res.status(422).json({ message: "Usuário não cadastrado!" })
 
     const checkPassword = await bcrypt.compare(password, user.password)
-    if (!checkPassword) {
-      res.status(422).json({ message: "Senha incorreta!" })
-      return
-    }
+    if (!checkPassword)
+      return res.status(422).json({ message: "Senha incorreta!" })
 
-    await createUserToken(user, req, res)
+    return await createUserToken(user, req, res)
   }
 
   static async checkUser(req: Request, res: Response) {
@@ -100,7 +78,7 @@ export default class UserController {
       currentUser = null
     }
 
-    res.status(200).send(currentUser)
+    return res.status(200).send(currentUser)
   }
 
   static async getUserById(req: Request, res: Response) {
@@ -108,12 +86,10 @@ export default class UserController {
 
     const user = await User.findById(id).select('-password')
 
-    if (!user) {
-      res.status(422).json({ message: "Usuário não encontrado!" })
-      return
-    }
+    if (!user)
+      return res.status(422).json({ message: "Usuário não encontrado!" })
 
-    res.status(200).json({ user })
+    return res.status(200).json({ user })
   }
 
   static async editUser(req: Request, res: Response) {
@@ -122,58 +98,42 @@ export default class UserController {
 
     const { name, phone, email, password, confirmpassword } = req.body
 
-    let image = ''
-
-    if (req.file) {
+    if (req.file)
       user.image = req.file.filename
-    }
 
-    if (!name) {
-      res.status(422).json({ message: "O nome é obrigatório!" })
-      return
-    }
+    if (!name)
+      return res.status(422).json({ message: "O nome é obrigatório!" })
 
     user.name = name
 
-    if (!email) {
-      res.status(422).json({ message: "O email é obrigatório!" })
-      return
-    }
+    if (!email)
+      return res.status(422).json({ message: "O email é obrigatório!" })
 
     const userExists = await User.findOne({ email: email })
 
-    if (user.email !== email && userExists) {
-      res.status(422).json({ message: "Utilize outro email!" })
-      return
-    }
+    if (user.email !== email && userExists)
+      return res.status(422).json({ message: "Utilize outro email!" })
 
     user.email = email
 
-    if (!phone) {
-      res.status(422).json({ message: "O telefone é obrigatório!" })
-      return
-    }
+    if (!phone)
+      return res.status(422).json({ message: "O telefone é obrigatório!" })
 
     user.phone = phone
 
     if (password !== confirmpassword) {
-      res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
-      return
+      return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
     } else if (password === confirmpassword && password) {
       const salt = await bcrypt.genSalt(12)
       const passwordHash = await bcrypt.hash(password, salt)
-
       user.password = passwordHash
     }
 
     try {
       await User.findOneAndUpdate({ _id: user.id }, { $set: user }, { new: true })
-      res.status(200).json({ message: "Usuário atualizado com sucesso!" })
+      return res.status(200).json({ message: "Usuário atualizado com sucesso!" })
     } catch (err) {
-      res.status(500).json({ message: err })
-      return
+      return res.status(500).json({ message: err })
     }
-
-    res.status(200).json({ message: "Deu Certo" })
   }
 }

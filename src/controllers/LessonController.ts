@@ -1,8 +1,8 @@
-import getToken from '../helpers/get-token'
-import getUserByToken from '../helpers/get-user-by-token'
-import Lesson from '../models/Lesson'
-import { isValidObjectId } from 'mongoose';
-import { Request, Response } from 'express';
+import getToken from "../helpers/get-token"
+import getUserByToken from "../helpers/get-user-by-token"
+import Lesson from "../models/Lesson"
+import { isValidObjectId } from "mongoose";
+import { Request, Response } from "express";
 
 export default class LessonController {
   static async create(req: Request, res: Response) {
@@ -29,7 +29,7 @@ export default class LessonController {
       hour_start,
       hour_end,
       teacher,
-      students: students.split(','),
+      students: students.split(","),
       classroom,
       subject,
       observation,
@@ -49,10 +49,10 @@ export default class LessonController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const lessons = await Lesson.find({ 'company': user.company })
-      .populate('teacher')
-      .populate('students')
-      .sort('date')
+    const lessons = await Lesson.find({ "company": user.company, "deletedAt": { "$exists": false } })
+      .populate("teacher")
+      .populate("students")
+      .sort("date")
 
     return res.status(200).json({ lessons: lessons })
   }
@@ -96,6 +96,32 @@ export default class LessonController {
     }
   }
 
+  static async softDeleteOne(req: Request, res: Response) {
+    const id = req.params.id
+
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
+
+    const lesson = await Lesson.findOne({ _id: id })
+    if (!lesson)
+      return res.status(404).json({ message: "Aula não encontrada!" })
+
+    const token = getToken(req)
+    const user = await getUserByToken(token, res)
+
+    if (user.company.toString() !== lesson.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
+
+    lesson.deletedAt = new Date()
+    try {
+      await Lesson.findByIdAndUpdate(id, lesson)
+      return res.status(200).json({ message: "Aula removida com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao remover a aula!" })
+    }
+  }
+
   static async updateOne(req: Request, res: Response) {
     const id = req.params.id
     const {
@@ -131,7 +157,7 @@ export default class LessonController {
       hour_start,
       hour_end,
       teacher,
-      students: students.split(','),
+      students: students.split(","),
       classroom,
       subject,
       observation,
@@ -183,9 +209,9 @@ const validateInputData = (date: any, hour_start: any, hour_end: any, teacher: a
   if (!teacher)
     return "Selecione um professor!"
 
-  const studentsArr = students.split(',')
+  const studentsArr = students.split(",")
 
-  if (!studentsArr || studentsArr.length === 0 || students === '')
+  if (!studentsArr || studentsArr.length === 0 || students === "")
     return "Selecione ao menos um aluno!"
 
   return ""

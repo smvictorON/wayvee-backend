@@ -8,7 +8,7 @@ const router = Router();
 router.post('/create', verifyToken, imageUpload.array('images'), LessonController.create);
 router.get('/', LessonController.getAll);
 router.get('/:id', LessonController.getOne);
-router.delete('/:id', verifyToken, LessonController.deleteOne);
+router.delete('/:id', verifyToken, LessonController.softDeleteOne);
 router.patch('/:id', verifyToken, imageUpload.array('images'), LessonController.updateOne);
 
 export default router;

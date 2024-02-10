@@ -14,6 +14,7 @@ const Lesson = mongoose.model(
     subject: { type: String },
     observation: { type: String },
     status: { type: String, enum: ['Active', 'Cancelled', 'Done'] },
+    deletedAt: { type: Date },
   }, { timestamps: true })
 )
 

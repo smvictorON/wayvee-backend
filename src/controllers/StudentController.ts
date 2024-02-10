@@ -1,8 +1,8 @@
-import getToken from '../helpers/get-token'
-import getUserByToken from '../helpers/get-user-by-token'
-import Student from '../models/Student'
-import { isValidObjectId } from 'mongoose';
-import { Request, Response } from 'express';
+import getToken from "../helpers/get-token"
+import getUserByToken from "../helpers/get-user-by-token"
+import Student from "../models/Student"
+import { isValidObjectId } from "mongoose";
+import { Request, Response } from "express";
 
 export default class StudentController {
   static async create(req: Request, res: Response) {
@@ -50,7 +50,7 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const students = await Student.find({ 'company': user.company }).sort('-createdAt')
+    const students = await Student.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
 
     return res.status(200).json({ students: students })
   }
@@ -86,6 +86,32 @@ export default class StudentController {
 
     try {
       await Student.findByIdAndRemove(id)
+      return res.status(200).json({ message: "Aluno removido com sucesso!" })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: "Ocorreu um problema ao remover aluno!" })
+    }
+  }
+
+  static async softDeleteOne(req: Request, res: Response) {
+    const id = req.params.id
+
+    if (!isValidObjectId(id))
+      return res.status(422).json({ message: "Id inválido!" })
+
+    const student = await Student.findOne({ _id: id })
+    if (!student)
+      return res.status(404).json({ message: "Aluno não encontrado!" })
+
+    const token = getToken(req)
+    const user = await getUserByToken(token, res)
+
+    if (user.company.toString() !== student.company.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
+
+    student.deletedAt = new Date()
+    try {
+      await Student.findByIdAndUpdate(id, student)
       return res.status(200).json({ message: "Aluno removido com sucesso!" })
     } catch (err) {
       console.log(err)
