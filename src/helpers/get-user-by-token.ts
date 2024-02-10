@@ -6,7 +6,7 @@ const getUserByToken = async (token: string | undefined, res: Response): Promise
   if (!token)
     return res.status(401).json({ message: "Acesso negado!" })
 
-  const decoded = jwt.verify(token, 'nossosecret') as JwtPayload
+  const decoded = jwt.verify(token, 'wayveesecret') as JwtPayload
   const userId = decoded.id
   const user = await User.findById(userId)
   return user

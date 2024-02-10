@@ -70,7 +70,7 @@ export default class UserController {
 
     if (req.headers.authorization) {
       const token = getToken(req)
-      const decoded = jwt.verify(token ?? "", 'nossosecret') as JwtPayload;
+      const decoded = jwt.verify(token ?? "", 'wayveesecret') as JwtPayload;
 
       currentUser = await User.findById(decoded.id)
       currentUser.password = undefined

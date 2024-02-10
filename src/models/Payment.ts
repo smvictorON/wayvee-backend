@@ -9,8 +9,7 @@ const Payment = mongoose.model(
     payer: { type: String, required: true },
     value: { type: Number, required: true },
     type: { type: String, enum: ['Receipt', 'Payment'], required: true  },
-    method: { type: String, enum: ['Cash', 'Card', 'Pix'], required: true  },
-    status: { type: String, enum: ['Pendent', 'Cancelled', 'Done'], required: true  },
+    method: { type: String, enum: ['Cash', 'Card', 'Pix', 'Check'], required: true  },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
     deletedAt: { type: Date },
   }, { timestamps: true })

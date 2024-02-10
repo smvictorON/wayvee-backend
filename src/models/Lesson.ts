@@ -13,7 +13,6 @@ const Lesson = mongoose.model(
     classroom: { type: String },
     subject: { type: String },
     observation: { type: String },
-    status: { type: String, enum: ['Active', 'Cancelled', 'Done'] },
     deletedAt: { type: Date },
   }, { timestamps: true })
 )

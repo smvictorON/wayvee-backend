@@ -6,7 +6,7 @@ const createUserToken = async (user: UserDocument, req: Request, res: Response) 
   const token = jwt.sign({
     name: user.name,
     id: user._id
-  }, "nossosecret")
+  }, "wayveesecret")
 
   res.status(200).json({ message: "Você está autenticado", token: token, userId: user._id })
 }

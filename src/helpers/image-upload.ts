@@ -31,13 +31,4 @@ const imageUpload = multer({
   }
 })
 
-// declare global {
-//   namespace Express {
-//     interface Request {
-//       files: any;
-//       file: any
-//     }
-//   }
-// }
-
 export default imageUpload
