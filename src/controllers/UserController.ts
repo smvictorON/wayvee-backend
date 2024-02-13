@@ -7,8 +7,8 @@ import getUserByToken from '../helpers/get-user-by-token'
 import { Request, Response } from 'express';
 
 export default class UserController {
-  static async register(req: Request, res: Response) {
-    const { name, email, phone, password, confirmpassword } = req.body
+  static async create(req: Request, res: Response) {
+    const { company, name, email, phone, password, confirmpassword } = req.body
 
     if (!name)
       return res.status(422).json({ message: "O nome é obrigatório!" })
@@ -28,6 +28,9 @@ export default class UserController {
     if (password !== confirmpassword)
       return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
 
+    if (!company)
+      return res.status(422).json({ message: "A empresa é obrigatória!" })
+
     const userExists = await User.findOne({ email: email })
     if (userExists)
       return res.status(422).json({ message: "Este email já está sendo utilizado!" })
@@ -35,12 +38,55 @@ export default class UserController {
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    const user = new User({ name, email, phone, password: passwordHash })
+    const user = new User({ name, email, phone, password: passwordHash, company })
+
+    try {
+      const newUser = await user.save()
+      return res.status(201).json({ message: "Usuário cadastrado com sucesso!", newUser })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: err })
+    }
+  }
+
+  static async register(req: Request, res: Response) {
+    const { company, name, email, phone, password, confirmpassword } = req.body
+
+    if (!name)
+      return res.status(422).json({ message: "O nome é obrigatório!" })
+
+    if (!email)
+      return res.status(422).json({ message: "O email é obrigatório!" })
+
+    if (!phone)
+      return res.status(422).json({ message: "O telefone é obrigatório!" })
+
+    if (!password)
+      return res.status(422).json({ message: "A senha é obrigatória!" })
+
+    if (!confirmpassword)
+      return res.status(422).json({ message: "A confirmação de senha é obrigatória!" })
+
+    if (password !== confirmpassword)
+      return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
+
+    if (!company)
+      return res.status(422).json({ message: "A empresa é obrigatória!" })
+
+    const userExists = await User.findOne({ email: email })
+    if (userExists)
+      return res.status(422).json({ message: "Este email já está sendo utilizado!" })
+
+    const salt = await bcrypt.genSalt(12)
+    const passwordHash = await bcrypt.hash(password, salt)
+
+    const user = new User({ name, email, phone, password: passwordHash, company })
 
     try {
       const newUser = await user.save()
       await createUserToken(newUser, req, res)
     } catch (err) {
+      console.log(err)
       return res.status(500).json({ message: err })
     }
   }
@@ -85,7 +131,6 @@ export default class UserController {
     const id = req.params.id
 
     const user = await User.findById(id).select('-password')
-
     if (!user)
       return res.status(422).json({ message: "Usuário não encontrado!" })
 
@@ -95,7 +140,6 @@ export default class UserController {
   static async editUser(req: Request, res: Response) {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
-
     const { name, phone, email, password, confirmpassword } = req.body
 
     if (req.file)
@@ -135,5 +179,14 @@ export default class UserController {
     } catch (err) {
       return res.status(500).json({ message: err })
     }
+  }
+
+  static async getAll(req: Request, res: Response) {
+    const token = getToken(req)
+    const user = await getUserByToken(token, res)
+
+    const users = await User.find({ "deletedAt": { "$exists": false } }).sort("-name")
+
+    return res.status(200).json({ users: users })
   }
 }

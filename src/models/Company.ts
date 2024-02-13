@@ -6,8 +6,8 @@ const Company = mongoose.model(
   new Schema({
     name: { type: String, required: true },
     cnpj: { type: String, required: true },
-    email: { type: String },
     phone: { type: String, required: true },
+    email: { type: String },
     address: {
       street: { type: String },
       city: { type: String },
@@ -15,7 +15,7 @@ const Company = mongoose.model(
       zipCode: { type: String }
     },
     deletedAt: { type: Date },
-    image: { type: String },
+    images: { type: Array },
   }, { timestamps: true })
 )
 

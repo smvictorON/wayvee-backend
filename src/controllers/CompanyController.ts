@@ -32,6 +32,8 @@ export default class CompanyController {
       address: parsedAddress,
     })
 
+    images.map((image: any) => company.images.push(image.filename))
+
     try {
       const newCompany = await company.save()
       return res.status(201).json({ message: "Empresa cadastrada com sucesso!", newCompany })
@@ -45,9 +47,9 @@ export default class CompanyController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const companys = await Company.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
+    const companies = await Company.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
 
-    return res.status(200).json({ companys: companys })
+    return res.status(200).json({ companies: companies })
   }
 
   static async getOne(req: Request, res: Response) {
@@ -111,6 +113,7 @@ export default class CompanyController {
   static async updateOne(req: Request, res: Response) {
     const id = req.params.id
     const { name, cnpj, email, phone, address } = req.body
+    const images: any = req.files
 
     if (!isValidObjectId(id))
       return res.status(422).json({ message: "Id inválido!" })
@@ -140,6 +143,11 @@ export default class CompanyController {
       cnpj: cnpj,
       email: email,
       address: parsedAddress,
+    }
+
+    if (images.length > 0) {
+      updatedData.images = []
+      images.map((image: any) => updatedData.images.push(image.filename))
     }
 
     try {

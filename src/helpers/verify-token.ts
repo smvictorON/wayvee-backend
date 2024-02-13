@@ -3,14 +3,12 @@ import getToken from './get-token'
 import { Response, Request, NextFunction } from 'express';
 
 const checkToken = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.headers.authorization) {
+  if (!req.headers.authorization)
     return res.status(401).json({ message: "Acesso negado!" })
-  }
 
   const token = getToken(req)
-  if (!token) {
+  if (!token)
     return res.status(401).json({ message: "Acesso negado!" })
-  }
 
   try {
     const verified = jwt.verify(token, 'wayveesecret')

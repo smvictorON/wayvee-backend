@@ -11,5 +11,7 @@ router.get('/checkuser', UserController.checkUser);
 router.get('/:id', UserController.getUserById);
 
 router.patch('/edit/:id', verifyToken, imageUpload.single('image'), UserController.editUser);
+router.post('/create', verifyToken, imageUpload.single('image'), UserController.create);
+router.get('/', verifyToken, UserController.getAll);
 
 export default router;
