@@ -3,6 +3,7 @@ import getUserByToken from "../helpers/get-user-by-token"
 import Company from "../models/Company"
 import { isValidObjectId } from "mongoose";
 import { Request, Response } from "express";
+import { setAudit } from "../helpers/set-audit";
 
 export default class CompanyController {
   static async create(req: Request, res: Response) {
@@ -15,6 +16,9 @@ export default class CompanyController {
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
+
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
 
     let parsedAddress
     try {
@@ -47,12 +51,21 @@ export default class CompanyController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
+
     const companies = await Company.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
 
     return res.status(200).json({ companies: companies })
   }
 
   static async getOne(req: Request, res: Response) {
+    const token = getToken(req)
+    const user = await getUserByToken(token, res)
+
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
+
     const id = req.params.id
 
     if (!isValidObjectId(id))
@@ -78,6 +91,9 @@ export default class CompanyController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
+
     try {
       await Company.findByIdAndRemove(id)
       return res.status(200).json({ message: "Empresa removida com sucesso!" })
@@ -99,6 +115,9 @@ export default class CompanyController {
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
+
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
 
     company.deletedAt = new Date()
     try {
@@ -124,6 +143,9 @@ export default class CompanyController {
 
     const token = getToken(req)
     const user = await getUserByToken(token, res)
+
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
 
     const err = validateInputData(name, cnpj, email, phone)
     if (err != "")
@@ -151,7 +173,8 @@ export default class CompanyController {
     }
 
     try {
-      await Company.findByIdAndUpdate(id, updatedData)
+      const updated = await Company.findByIdAndUpdate(id, updatedData, { new: true })
+      setAudit("Company", company._id, company.toObject(), updated?.toObject(), user._id, user.company)
       return res.status(200).json({ message: "Empresa atualizada com sucesso!" })
     } catch (err) {
       console.log(err)

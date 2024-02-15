@@ -7,6 +7,7 @@ interface User {
   phone: string;
   company: Types.ObjectId | string;
   image?: string;
+  isSuper: boolean
 }
 
 export interface UserDocument extends User, Document {}
@@ -18,6 +19,7 @@ const userSchema = new Schema<UserDocument>({
   phone: { type: String, required: true },
   company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
   image: { type: String },
+  isSuper: { type: Boolean },
 }, { timestamps: true });
 
 const UserModel = mongoose.model<UserDocument>('User', userSchema);

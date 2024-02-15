@@ -8,7 +8,12 @@ const createUserToken = async (user: UserDocument, req: Request, res: Response) 
     id: user._id
   }, "wayveesecret")
 
-  return res.status(200).json({ message: "Você está autenticado", token: token, userId: user._id })
+  return res.status(200).json({
+    message: "Você está autenticado",
+    token: token,
+    userId: user._id,
+    isSuper: user.isSuper === true
+  })
 }
 
 export default createUserToken

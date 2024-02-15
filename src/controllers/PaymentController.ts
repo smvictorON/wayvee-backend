@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import getToken from '../helpers/get-token'
 import getUserByToken from '../helpers/get-user-by-token'
 import { Request, Response } from 'express';
+import { setAudit } from "../helpers/set-audit";
 
 export default class PaymentController {
   static async create(req: Request, res: Response) {
@@ -41,12 +42,15 @@ export default class PaymentController {
     }
   }
 
-
   static async getAll(req: Request, res: Response) {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const payments = await Payment.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("date")
+    let payments
+    if(user.isSuper)
+      payments = await Payment.find({ "deletedAt": { "$exists": false } }).sort("date")
+    else
+      payments = await Payment.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("date")
 
     return res.status(200).json({ payments: payments })
   }

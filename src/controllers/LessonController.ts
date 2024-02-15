@@ -3,6 +3,7 @@ import getUserByToken from "../helpers/get-user-by-token"
 import Lesson from "../models/Lesson"
 import { isValidObjectId } from "mongoose";
 import { Request, Response } from "express";
+import { setAudit } from "../helpers/set-audit";
 
 export default class LessonController {
   static async create(req: Request, res: Response) {
@@ -49,10 +50,13 @@ export default class LessonController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const lessons = await Lesson.find({ "company": user.company, "deletedAt": { "$exists": false } })
-      .populate("teacher")
-      .populate("students")
-      .sort("date")
+    let lessons
+    if(user.isSuper)
+      lessons = await Lesson.find({ "deletedAt": { "$exists": false } })
+      .populate("teacher").populate("students").sort("date")
+    else
+      lessons = await Lesson.find({ "company": user.company, "deletedAt": { "$exists": false } })
+      .populate("teacher").populate("students").sort("date")
 
     return res.status(200).json({ lessons: lessons })
   }
@@ -109,7 +113,7 @@ export default class LessonController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    if (user.company.toString() !== lesson.company.toString())
+    if (user.company.toString() !== lesson.company.toString() && !user.isSuper)
       return res.status(422).json({ message: "Houve um problema no processamento da exclusão!" })
 
     lesson.deletedAt = new Date()
@@ -164,7 +168,8 @@ export default class LessonController {
     }
 
     try {
-      await Lesson.findByIdAndUpdate(id, updatedData)
+      const updated = await Lesson.findByIdAndUpdate(id, updatedData, { new: true })
+      setAudit("Student", lesson._id, lesson.toObject(), updated?.toObject(), user._id, user.company)
       return res.status(200).json({ message: "Aula atualizada com sucesso!" })
     } catch (err) {
       console.log(err)

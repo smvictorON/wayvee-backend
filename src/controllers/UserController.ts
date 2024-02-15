@@ -5,35 +5,15 @@ import getToken from '../helpers/get-token'
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import getUserByToken from '../helpers/get-user-by-token'
 import { Request, Response } from 'express';
+import { setAudit } from "../helpers/set-audit";
 
 export default class UserController {
   static async create(req: Request, res: Response) {
-    const { company, name, email, phone, password, confirmpassword } = req.body
+    const { name, email, phone, password, confirmpassword, company } = req.body
 
-    if (!name)
-      return res.status(422).json({ message: "O nome é obrigatório!" })
-
-    if (!email)
-      return res.status(422).json({ message: "O email é obrigatório!" })
-
-    if (!phone)
-      return res.status(422).json({ message: "O telefone é obrigatório!" })
-
-    if (!password)
-      return res.status(422).json({ message: "A senha é obrigatória!" })
-
-    if (!confirmpassword)
-      return res.status(422).json({ message: "A confirmação de senha é obrigatória!" })
-
-    if (password !== confirmpassword)
-      return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
-
-    if (!company)
-      return res.status(422).json({ message: "A empresa é obrigatória!" })
-
-    const userExists = await User.findOne({ email: email })
-    if (userExists)
-      return res.status(422).json({ message: "Este email já está sendo utilizado!" })
+    const err = await validateInputData(name, email, phone, password, confirmpassword, company)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
@@ -50,32 +30,11 @@ export default class UserController {
   }
 
   static async register(req: Request, res: Response) {
-    const { company, name, email, phone, password, confirmpassword } = req.body
+    const { name, email, phone, password, confirmpassword, company } = req.body
 
-    if (!name)
-      return res.status(422).json({ message: "O nome é obrigatório!" })
-
-    if (!email)
-      return res.status(422).json({ message: "O email é obrigatório!" })
-
-    if (!phone)
-      return res.status(422).json({ message: "O telefone é obrigatório!" })
-
-    if (!password)
-      return res.status(422).json({ message: "A senha é obrigatória!" })
-
-    if (!confirmpassword)
-      return res.status(422).json({ message: "A confirmação de senha é obrigatória!" })
-
-    if (password !== confirmpassword)
-      return res.status(422).json({ message: "A senha e a confirmação de senha precisam ser iguais!" })
-
-    if (!company)
-      return res.status(422).json({ message: "A empresa é obrigatória!" })
-
-    const userExists = await User.findOne({ email: email })
-    if (userExists)
-      return res.status(422).json({ message: "Este email já está sendo utilizado!" })
+    const err = await validateInputData(name, email, phone, password, confirmpassword, company)
+    if (err != "")
+      return res.status(422).json({ message: err });
 
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
@@ -174,7 +133,8 @@ export default class UserController {
     }
 
     try {
-      await User.findOneAndUpdate({ _id: user.id }, { $set: user }, { new: true })
+      const updated = await User.findOneAndUpdate({ _id: user.id }, { $set: user }, { new: true })
+      setAudit("User", userExists?._id, userExists?.toObject(), updated?.toObject(), user._id, user.company)
       return res.status(200).json({ message: "Usuário atualizado com sucesso!" })
     } catch (err) {
       return res.status(500).json({ message: err })
@@ -185,8 +145,40 @@ export default class UserController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
+    if(!user.isSuper)
+      return res.status(422).json({ message: "Requisição inválida!" });
+
     const users = await User.find({ "deletedAt": { "$exists": false } }).sort("-name")
 
     return res.status(200).json({ users: users })
   }
+}
+
+const validateInputData = async (name: any, email: any, phone: any, password: any, confirmpassword: any, company: any): Promise<string> => {
+  if (!name)
+    return "O nome é obrigatório!"
+
+  if (!email)
+    return "O email é obrigatório!"
+
+  if (!phone)
+    return "O telefone é obrigatório!"
+
+  if (!password)
+    return "A senha é obrigatória!"
+
+  if (!confirmpassword)
+    return "A confirmação de senha é obrigatória!"
+
+  if (password !== confirmpassword)
+    return "A senha e a confirmação de senha precisam ser iguais!"
+
+  if (!company)
+    return "A empresa é obrigatória!"
+
+  const userExists = await User.findOne({ email: email })
+  if (userExists)
+    return "Este email já está sendo utilizado!"
+
+  return ""
 }

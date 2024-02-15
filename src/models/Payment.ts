@@ -5,8 +5,8 @@ const Payment = mongoose.model(
   'Payment',
   new Schema({
     date: { type: Date, required: true },
-    receiver: { type: String, required: true },
-    payer: { type: String, required: true },
+    receiver: { type: Schema.Types.ObjectId, required: true },
+    payer: { type: Schema.Types.ObjectId, required: true },
     value: { type: Number, required: true },
     type: { type: String, enum: ['Receipt', 'Payment'], required: true  },
     method: { type: String, enum: ['Cash', 'Card', 'Pix', 'Check'], required: true  },

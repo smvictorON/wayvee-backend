@@ -3,6 +3,7 @@ import getUserByToken from "../helpers/get-user-by-token"
 import Student from "../models/Student"
 import { isValidObjectId } from "mongoose";
 import { Request, Response } from "express";
+import { setAudit } from "../helpers/set-audit";
 
 export default class StudentController {
   static async create(req: Request, res: Response) {
@@ -50,7 +51,11 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    const students = await Student.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
+    let students = []
+    if(user.isSuper)
+      students = await Student.find({ "deletedAt": { "$exists": false } }).sort("-name")
+    else
+      students = await Student.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
 
     return res.status(200).json({ students: students })
   }
@@ -134,7 +139,7 @@ export default class StudentController {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    if (user.company.toString() !== student.company.toString())
+    if (user.company.toString() !== student.company.toString() && !user.isSuper)
       return res.status(422).json({ message: "Houve um problema no processamento da edição!" })
 
     const err = validateInputData(name, phone, cpf, email, rg)
@@ -165,7 +170,8 @@ export default class StudentController {
     }
 
     try {
-      await Student.findByIdAndUpdate(id, updatedData)
+      const updated = await Student.findByIdAndUpdate(id, updatedData, { new: true })
+      setAudit("Student", student._id, student.toObject(), updated?.toObject(), user._id, user.company)
       return res.status(200).json({ message: "Aluno atualizado com sucesso!" })
     } catch (err) {
       console.log(err)
