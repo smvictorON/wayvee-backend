@@ -10,10 +10,12 @@ const Teacher = mongoose.model(
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
     address: {
       street: { type: String },
+      number: { type: Number },
       city: { type: String },
       state: { type: String },
       zipCode: { type: String }
     },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     email: { type: String },
     rg: { type: String },
     birthdate: { type: Date },

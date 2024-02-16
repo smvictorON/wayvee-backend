@@ -10,6 +10,7 @@ const Company = mongoose.model(
     email: { type: String },
     address: {
       street: { type: String },
+      number: { type: Number },
       city: { type: String },
       state: { type: String },
       zipCode: { type: String }
