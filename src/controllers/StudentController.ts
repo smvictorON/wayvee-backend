@@ -7,7 +7,7 @@ import { setAudit } from "../helpers/set-audit";
 
 export default class StudentController {
   static async create(req: Request, res: Response) {
-    const { name, phone, cpf, address, email, rg, birthdate } = req.body
+    const { name, phone, cpf, address, email, rg, birthdate, gender } = req.body
     const images: any = req.files
 
     const err = validateInputData(name, phone, cpf, email, rg)
@@ -33,6 +33,7 @@ export default class StudentController {
       email,
       rg,
       birthdate,
+      gender,
       company: user.company
     })
 
@@ -126,7 +127,7 @@ export default class StudentController {
 
   static async updateOne(req: Request, res: Response) {
     const id = req.params.id
-    const { name, phone, cpf, address, email, rg, birthdate } = req.body
+    const { name, phone, cpf, address, email, rg, birthdate, gender } = req.body
     const images: any = req.files
 
     if (!isValidObjectId(id))
@@ -162,6 +163,7 @@ export default class StudentController {
       email: email,
       rg: rg,
       birthdate: birthdate,
+      gender: gender,
     }
 
     if (images.length > 0) {

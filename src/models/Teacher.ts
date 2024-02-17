@@ -1,4 +1,5 @@
 import mongoose from '../db/conn'
+import { AddressObj } from './AddressObj'
 const { Schema } = mongoose
 
 const Teacher = mongoose.model(
@@ -8,13 +9,7 @@ const Teacher = mongoose.model(
     phone: { type: String, required: true },
     cpf: { type: String, required: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
-    address: {
-      street: { type: String },
-      number: { type: Number },
-      city: { type: String },
-      state: { type: String },
-      zipCode: { type: String }
-    },
+    address: AddressObj,
     gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     email: { type: String },
     rg: { type: String },
