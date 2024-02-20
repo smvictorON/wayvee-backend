@@ -54,7 +54,7 @@ export default class CompanyController {
     if(!user.isSuper)
       return res.status(422).json({ message: "Requisição inválida!" });
 
-    const companies = await Company.find({ "company": user.company, "deletedAt": { "$exists": false } }).sort("-name")
+    const companies = await Company.find({ "deletedAt": { "$exists": false } }).sort("-name")
 
     return res.status(200).json({ companies: companies })
   }

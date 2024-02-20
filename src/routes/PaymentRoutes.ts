@@ -7,5 +7,8 @@ const router = Router();
 
 router.post('/create', verifyToken, imageUpload.array('images'), PaymentController.create);
 router.get('/', PaymentController.getAll);
+router.get('/:id', PaymentController.getOne);
+router.delete('/:id', verifyToken, PaymentController.softDeleteOne);
+router.patch('/:id', verifyToken, imageUpload.array('images'), PaymentController.updateOne);
 
 export default router;

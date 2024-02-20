@@ -8,6 +8,7 @@ interface User {
   company: Types.ObjectId | string;
   image?: string;
   isSuper: boolean
+  deletedAt: Date
 }
 
 export interface UserDocument extends User, Document {}
@@ -20,6 +21,7 @@ const userSchema = new Schema<UserDocument>({
   company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
   image: { type: String },
   isSuper: { type: Boolean },
+  deletedAt: { type: Date },
 }, { timestamps: true });
 
 const UserModel = mongoose.model<UserDocument>('User', userSchema);
