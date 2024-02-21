@@ -4,6 +4,7 @@ import Company from "../models/Company"
 import { isValidObjectId } from "mongoose";
 import { Request, Response } from "express";
 import { setAudit } from "../helpers/set-audit";
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export default class CompanyController {
   static async create(req: Request, res: Response) {
@@ -62,20 +63,35 @@ export default class CompanyController {
   static async getOne(req: Request, res: Response) {
     const token = getToken(req)
     const user = await getUserByToken(token, res)
-
-    if(!user.isSuper)
-      return res.status(422).json({ message: "Requisição inválida!" });
-
     const id = req.params.id
 
     if (!isValidObjectId(id))
       return res.status(422).json({ message: "Id inválido!" })
+
+    if(user.company.toString() !== id.toString())
+      return res.status(422).json({ message: "Houve um problema no processamento!" })
 
     const company = await Company.findOne({ _id: id })
     if (!company)
       return res.status(404).json({ message: "Empresa não encontrada!" })
 
     return res.status(200).json({ company: company })
+  }
+
+  static async checkCompany(req: Request, res: Response) {
+    let currentCompany: any
+
+    if (req.headers.authorization) {
+      const token = getToken(req)
+      const user = await getUserByToken(token, res)
+
+      currentCompany = await Company.findById(user.company)
+      currentCompany.password = undefined
+    } else {
+      currentCompany = null
+    }
+
+    return res.status(200).send(currentCompany)
   }
 
   static async deleteOne(req: Request, res: Response) {

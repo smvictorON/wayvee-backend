@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken'
 import { Request, Response } from 'express';
-import { UserDocument } from '../models/User';
 
-const createUserToken = async (user: UserDocument, req: Request, res: Response) => {
+const createUserToken = async (user: any, req: Request, res: Response) => {
   const token = jwt.sign({
     name: user.name,
+    company: user.company._id,
     id: user._id
   }, "wayveesecret")
 
@@ -12,6 +12,7 @@ const createUserToken = async (user: UserDocument, req: Request, res: Response) 
     message: "Você está autenticado",
     token: token,
     userId: user._id,
+    company: user.company._id,
     isSuper: user.isSuper === true
   })
 }

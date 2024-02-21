@@ -1,29 +1,18 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose from '../db/conn'
+const { Schema } = mongoose
 
-interface User {
-  name: string;
-  email: string;
-  password: string;
-  phone: string;
-  company: Types.ObjectId | string;
-  image?: string;
-  isSuper: boolean
-  deletedAt: Date
-}
+const User = mongoose.model(
+  'User',
+  new Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    phone: { type: String, required: true },
+    company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
+    image: { type: String },
+    isSuper: { type: Boolean },
+    deletedAt: { type: Date },
+  }, { timestamps: true })
+)
 
-export interface UserDocument extends User, Document {}
-
-const userSchema = new Schema<UserDocument>({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  phone: { type: String, required: true },
-  company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
-  image: { type: String },
-  isSuper: { type: Boolean },
-  deletedAt: { type: Date },
-}, { timestamps: true });
-
-const UserModel = mongoose.model<UserDocument>('User', userSchema);
-
-export default UserModel;
+export default User;

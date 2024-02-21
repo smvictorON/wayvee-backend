@@ -60,7 +60,7 @@ export default class UserController {
     if (!password)
       return res.status(422).json({ message: "A senha é obrigatória!" })
 
-    const user = await User.findOne({ email: email })
+    const user = await User.findOne({ email: email }).populate('company')
     if (!user)
       return res.status(422).json({ message: "Usuário não cadastrado!" })
 
