@@ -4,45 +4,17 @@ import Student from "../models/Student"
 import { isValidObjectId } from "mongoose";
 import { Request, Response } from "express";
 import { setAudit } from "../helpers/set-audit";
+import { CreateStudent } from "../applications/students/create";
 
 export default class StudentController {
   static async create(req: Request, res: Response) {
-    const { name, phone, cpf, address, email, rg, birthdate, gender } = req.body
-    const images: any = req.files
-
-    const err = validateInputData(name, phone, cpf, email, rg)
-    if (err != "")
-      return res.status(422).json({ message: err });
-
     const token = getToken(req)
     const user = await getUserByToken(token, res)
 
-    let parsedAddress
     try {
-      parsedAddress = JSON.parse(address);
-    } catch (err) {
-      console.log(err)
-      return res.status(422).json({ message: "Endereço inválido!" });
-    }
-
-    const student = new Student({
-      name,
-      phone,
-      cpf,
-      address: parsedAddress,
-      email,
-      rg,
-      birthdate,
-      gender,
-      company: user.company
-    })
-
-    images.map((image: any) => student.images.push(image.filename))
-
-    try {
-      const newStudent = await student.save()
-      return res.status(201).json({ message: "Aluno cadastrado com sucesso!", newStudent })
-    } catch (err) {
+      const result = await CreateStudent(req.body, req.files, user)
+      return res.status(201).json({ message: result.message, newStudent: result.newStudent })
+    } catch(err) {
       console.log(err)
       return res.status(500).json({ message: "Ocorreu um problema ao cadastrar aluno!" })
     }
