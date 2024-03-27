@@ -3,7 +3,7 @@ export const ValidateStudent = (name: any, phone: any, cpf: any, email: any, rg:
     return "O nome é obrigatório!"
 
   if (!phone)
-    return "A telefone é obrigatório!"
+    return "O telefone é obrigatório!"
 
   if (!cpf)
     return "O CPF é obrigatório!"
